@@ -1,13 +1,25 @@
-from flask import Flask, request
-import psycopg2, psycopg2.extras
+from flask import Flask, request, abort, make_response, jsonify
+# import logging
+from psycopg2 import connect, extras, sql
 
 import json
 
+from helpers import get_default_day, is_port_code, construct_query_for_location
+from constants import (QUERY_EARLIEST_DAY, 
+    QUERY_LATEST_DAY, 
+    QUERY_REGION_MAP,
+    QUERY_PORTS_GIVEN_LOCATION,
+    QUERY_AGGREGATED_PRICES,
+    QUERY_GENERATED_DATES_GIVEN_RANGE,
+    QUERY_DAYS_AND_PRICES)
+
+
+# logging.basicConfig(filename='record.log', level=logging.DEBUG)
 app = Flask(__name__)
 
 def get_db_connection():
     # TODO: Put in config?
-    conn = psycopg2.connect(host='localhost',
+    conn = connect(host='localhost',
                             database='postgres',    
                             user='postgres',        
                             password='ratestask')
@@ -17,26 +29,50 @@ def get_db_connection():
 def index():
     return 'Hello World!'
 
+#TODO: Do logging?
 @app.route('/rates', methods=['GET'])
 def get_rates():
     args = request.args
+
+    # For query string parameters, we assume they are optional
     date_from = args.get('date_from')
     date_to = args.get('date_to')
     origin = args.get('origin')
     destination = args.get('destination')
 
-    #TODO: Do parameter check
     #TODO: Sanitize parameters (eg. remove "" if any)
- 
+    
     rates = []
-
-    #TODO: Do optimization? (eg. return early etc)
 
     conn = get_db_connection()
     try:
-        with conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor) as cur:
-            query = query_days_and_prices(origin, destination, date_from, date_to)
+        with conn.cursor() as cur:
+            # We assume that if the date_from is not provided, we get earliest day available
+            if not date_from:
+                date_from = get_default_day(cur, QUERY_EARLIEST_DAY)
+            
+            # We assume that if the date_to is not provided, we get latest day available
+            if not date_to:
+                date_to = get_default_day(cur, QUERY_LATEST_DAY)
+
+        # We assume that we can get all rates of all origins and destination, but not if one is unknown and other is known
+        # (eg. origin is provided but destination is not provided)
+        if (origin and not destination) or (not origin and destination):
+            abort(400, "Provide both origin or destination or none at all.")
+
+        sql_origin = sql.Literal(origin) if is_port_code(origin) else construct_query_for_location(origin)
+        sql_destination = sql.Literal(destination) if is_port_code(destination) else construct_query_for_location(destination)
+        sql_date_from = sql.Literal(date_from)
+        sql_date_to = sql.Literal(date_to)
+
+        sql_prices = sql.SQL(QUERY_AGGREGATED_PRICES).format(sql_origin, sql_destination, sql_date_from, sql_date_to)
+        sql_dates = sql.SQL(QUERY_GENERATED_DATES_GIVEN_RANGE).format(sql_date_from, sql_date_to)
+
+        with conn.cursor(cursor_factory = extras.RealDictCursor) as cur:
+            query = sql.SQL(QUERY_DAYS_AND_PRICES).format(sql_dates, sql_prices)
+            print(query.as_string(conn))
             cur.execute(query)
+        
             result = json.dumps(cur.fetchall(), default=str)    # TODO: "default=str" is a hackaround for datetime conversion; rework into a more elegant way of fetching results
             rates = json.loads(result)                          # TODO: Hackaround for converting json string into dict in conjunction to above; needs rework also
     finally:
@@ -55,69 +91,11 @@ def get_rates():
 
     return rates
 
-# TODO: Move to separate file
-def query_generated_dates_given_range(date_from, date_to):
-    return f'''
-        SELECT day::date 
-            FROM generate_series(timestamp '{date_from}', '{date_to}', '1 day') day
-    '''
 
-def query_days_and_prices(origin, destination, date_from, date_to):
-    return f'''
-        SELECT dates.day as day, aggregated_prices.average_price as average_price, aggregated_prices.price_count as price_count
-        FROM ({query_generated_dates_given_range(date_from, date_to)}) dates
-        LEFT JOIN ({query_aggregated_prices(origin, destination, date_from, date_to)}) aggregated_prices
-        ON dates.day = aggregated_prices.day
-        ORDER BY day ASC
-    '''
+@app.errorhandler(400)
+def custom_bad_request(error):
+    return make_response(jsonify({ 'message': error.description }), 400)
 
-def query_aggregated_prices(origin, destination, date_from, date_to):
-    return f'''
-        SELECT day, avg(price) as average_price, count(price) as price_count FROM prices 
-            WHERE orig_code IN ({query_ports_given_location(origin)}) 
-            AND dest_code IN ({query_ports_given_location(destination)})
-            AND (day BETWEEN '{date_from}' AND '{date_to}')
-            GROUP BY day
-    '''
-
-# TODO: Might fail if new data does not follow 5-digit upper case standard
-def is_port_code(location):
-    location = str(location)
-    return len(location) <= 5 and location.isupper()
-
-def query_ports_given_location(location):
-    return f"'{location}'" if is_port_code(location) else f'''
-        SELECT 
-        -- 	joined_regions.root_slug as root_port_slug,
-        -- 	joined_regions.parent_slug as parent_port_slug,
-        -- 	ports.parent_slug as port_slug,
-        -- 	joined_regions.name as port_slug_name,
-        -- 	ports.name as port_name,
-            ports.code as port_code
-        FROM ports 
-        INNER JOIN 
-            ({query_region_map()}) joined_regions
-                ON ports.parent_slug = joined_regions.slug 
-        WHERE ports.parent_slug='{location}' 
-        OR joined_regions.parent_slug='{location}' 
-        OR joined_regions.root_slug='{location}'
-    '''
-
-# TODO: Can be optimized by creating new schema instead?
-# TODO: Hackaround, will fail if new data will cause nesting references that exceeds 3 degrees (eg. new -> parent_slug -> grand_parent_slug -> root_slug)
-def query_region_map():
-    return '''
-        SELECT
-            r1.name as name, 
-            r1.slug as slug, 
-            r2.slug as parent_slug, 
-            r3.slug as root_slug 
-        FROM regions r1 
-        LEFT JOIN regions r2 
-            ON r1.parent_slug = r2.slug 
-        LEFT JOIN regions r3 
-            ON r2.parent_slug = r3.slug
-    '''
 
 if __name__ == '__main__':
     app.run()

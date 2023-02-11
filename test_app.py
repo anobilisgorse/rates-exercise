@@ -24,6 +24,16 @@ def test_get_rates():
     assert date_map['2016-01-02'] == 1112
     assert date_map['2016-01-03'] is None
 
+# TODO: Add test for missing origin and destination (must return all entries)
+
+# TODO: Add test for one missing location, either origin and destination (404)
+
+# TODO: Add test for missing date_to and date_from (must return all entries)
+
+# TODO: Add test for missing date_to only (must return date_from to latest date entries)
+
+# TODO: Add test for missing date_from only (must return earliest date to date_to entriess)
+
 
 def assert_scoped_dates(response, request_date_from, request_date_to):
     expected_dates = generate_date_range(request_date_from, request_date_to)
