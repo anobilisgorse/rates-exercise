@@ -15,7 +15,7 @@ def get_db_connection():
 
 @app.route('/', methods=['GET'])
 def index():
-    return 'Hello World'
+    return 'Hello World!'
 
 @app.route('/rates', methods=['GET'])
 def get_rates():
