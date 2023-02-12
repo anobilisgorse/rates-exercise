@@ -1,3 +1,5 @@
+DEFAULT_DATE_FORMAT = '%Y-%m-%d'
+
 QUERY_EARLIEST_DAY = 'SELECT MIN(day) FROM prices'
 
 QUERY_LATEST_DAY = 'SELECT MAX(day) FROM prices'

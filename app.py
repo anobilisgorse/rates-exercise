@@ -55,10 +55,9 @@ def get_rates():
             if not date_to:
                 date_to = get_default_day(cur, QUERY_LATEST_DAY)
 
-        # We assume that we can get all rates of all origins and destination, but not if one is unknown and other is known
-        # (eg. origin is provided but destination is not provided)
-        if (origin and not destination) or (not origin and destination):
-            abort(400, "Provide both origin or destination or none at all.")
+        # The API is specific only to rates between two locations, thus one cannot be missing
+        if not origin or not destination:
+            abort(400, 'Origin and destination is required.')
 
         sql_origin = sql.Literal(origin) if is_port_code(origin) else construct_query_for_location(origin)
         sql_destination = sql.Literal(destination) if is_port_code(destination) else construct_query_for_location(destination)
