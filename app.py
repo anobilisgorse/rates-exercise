@@ -20,9 +20,9 @@ app = Flask(__name__)
 def get_db_connection():
     # TODO: Put in config?
     conn = connect(host='localhost',
-                            database='postgres',    
-                            user='postgres',        
-                            password='ratestask')
+                    database='postgres',    
+                    user='postgres',        
+                    password='ratestask')
     return conn
 
 @app.route('/', methods=['GET'])
