@@ -1,9 +1,26 @@
 from psycopg2 import sql
-from constants import DEFAULT_DATE_FORMAT, QUERY_PORTS_GIVEN_LOCATION, QUERY_REGION_MAP
+from constants import (
+    DEFAULT_DATE_FORMAT, 
+    QUERY_PORT_EXISTS, 
+    QUERY_REGION_EXISTS, 
+    QUERY_PORTS_GIVEN_LOCATION, 
+    QUERY_REGION_MAP
+)
+
+def does_location_exists(cursor, location):
+    query_string =  QUERY_PORT_EXISTS if is_port_code(location) else QUERY_REGION_EXISTS
+    sql_location = sql.Literal(location)
+    sql_exists = sql.SQL(query_string).format(sql_location)
+
+    cursor.execute(sql_exists)
+    (do_exist, ) = cursor.fetchone()
+
+    return do_exist
 
 def get_default_day(cursor, query_string):
     cursor.execute(query_string)
     (default_date, ) = cursor.fetchone()
+
     return default_date.strftime(DEFAULT_DATE_FORMAT)
 
 # NOTE: Assuming 5-digit upper case standard, if new data does not abide to this code will cause issue

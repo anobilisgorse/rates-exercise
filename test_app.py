@@ -80,6 +80,26 @@ def test_get_rates_missing_one_location():
     json_body = json.loads(response.data.decode('utf-8'))
     assert json_body['message'] == 'Origin and destination is required.'
 
+# Test for an invalid port code, either origin and destination (400)
+def test_get_rates_invalid_port():
+    url_params = { 'date_from': '2016-01-01', 'date_to': '2016-01-10', 'origin': 'XNTNX', 'destination': 'north_europe_main' }
+
+    response = app.test_client().get(f'/rates?{urlencode(url_params)}')
+
+    assert response.status_code == 400
+    json_body = json.loads(response.data.decode('utf-8'))
+    assert json_body['message'] == 'Origin is not a valid port code or region slug.'
+
+# Test for an invalid region slug, either origin and destination (400)
+def test_get_rates_invalid_region():
+    url_params = { 'date_from': '2016-01-01', 'date_to': '2016-01-10', 'origin': 'CNSGH', 'destination': 'underwater_atlantis' }
+
+    response = app.test_client().get(f'/rates?{urlencode(url_params)}')
+
+    assert response.status_code == 400
+    json_body = json.loads(response.data.decode('utf-8'))
+    assert json_body['message'] == 'Destination is not a valid port code or region slug.'
+
 # Test for missing date_to and date_from (must return all entries)
 def test_get_rates_no_date_range():
     url_params = {'origin': 'CNSGH', 'destination': 'north_europe_main' }

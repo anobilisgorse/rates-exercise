@@ -4,7 +4,7 @@ from psycopg2 import connect, extras, sql
 
 import json
 
-from helpers import get_default_day, is_port_code, construct_query_for_location
+from helpers import does_location_exists, get_default_day, is_port_code, construct_query_for_location
 from constants import (
     QUERY_EARLIEST_DAY, 
     QUERY_LATEST_DAY, 
@@ -40,13 +40,25 @@ def get_rates():
     origin = args.get('origin')
     destination = args.get('destination')
 
-    #TODO: Sanitize parameters (eg. remove "" if any)
+    #TODO: Sanitize parameters? (eg. remove "" if any)
     
     rates = []
 
     conn = get_db_connection()
     try:
+        # The API is specific only to rates between two locations, thus one cannot be missing
+        if not origin or not destination:
+            abort(400, 'Origin and destination is required.')
+
         with conn.cursor() as cur:
+            # We check if origin exists in database (for port code or region slug)
+            if not does_location_exists(cur, origin):
+                abort(400, 'Origin is not a valid port code or region slug.')
+
+            # We check if destination exists in database (for port code or region slug)
+            if not does_location_exists(cur, destination):
+                abort(400, 'Destination is not a valid port code or region slug.')
+
             # We assume that if the date_from is not provided, we get earliest day available
             if not date_from:
                 date_from = get_default_day(cur, QUERY_EARLIEST_DAY)
@@ -54,10 +66,6 @@ def get_rates():
             # We assume that if the date_to is not provided, we get latest day available
             if not date_to:
                 date_to = get_default_day(cur, QUERY_LATEST_DAY)
-
-        # The API is specific only to rates between two locations, thus one cannot be missing
-        if not origin or not destination:
-            abort(400, 'Origin and destination is required.')
 
         sql_origin = sql.Literal(origin) if is_port_code(origin) else construct_query_for_location(origin)
         sql_destination = sql.Literal(destination) if is_port_code(destination) else construct_query_for_location(destination)
