@@ -1,17 +1,17 @@
 from flask import Flask, request, abort, make_response, jsonify
-# import logging
 from psycopg2 import connect, extras, sql
+# import logging
 
 import json
 
 from helpers import get_default_day, is_port_code, construct_query_for_location
-from constants import (QUERY_EARLIEST_DAY, 
+from constants import (
+    QUERY_EARLIEST_DAY, 
     QUERY_LATEST_DAY, 
-    QUERY_REGION_MAP,
-    QUERY_PORTS_GIVEN_LOCATION,
     QUERY_AGGREGATED_PRICES,
     QUERY_GENERATED_DATES_GIVEN_RANGE,
-    QUERY_DAYS_AND_PRICES)
+    QUERY_DAYS_AND_PRICES
+)
 
 
 # logging.basicConfig(filename='record.log', level=logging.DEBUG)
