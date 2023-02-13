@@ -5,13 +5,30 @@ A solution for the [rates-task](https://github.com/xeneta/ratestask) exercise.
 To run this locally, you can follow the steps in Initialization for an instant setup.
 You can opt to do this manually too if you follow the steps in Manual Setup.
 
-# Initialization (Docker)
+# Instant Setup
 
-TODO (Create Dockerfile)
+## Initialization via Docker
+
+For a one time setup and run, you may run the following command:
+
+```bash
+docker compose up --build api
+```
+
+The app is running on http://localhost:5000
+
+## Known Issues
+
+When re-running the `docker compose up` command, you might encounter a `Permission denied` error involving the created volume `data`. To mitigate, you may run the following first:
+
+```bash
+ sudo chmod 777 data
+```
 
 # Manual Setup
 
-Do this only if you want to do a manual setup over the instant setup + run above (via Docker).
+Do this only if you want to do a manual setup over the instant setup + initialization via Docker above.
+
 ## Setup your local run
 
 As this uses the [rates-task](https://github.com/xeneta/ratestask) resources (initialized dataset), we can use its [corresponding Dockerfile](https://github.com/xeneta/ratestask/blob/trunk/Dockerfile) also found in `task/` folder:
@@ -57,4 +74,17 @@ If you use VS Code and have the [Coverage Gutters](https://marketplace.visualstu
 
 ```bash
 >  py.test test_app.py --cov-report xml:cov.xml --cov=.
+```
+
+# Structure
+```
+- sql/                  - Contains test or mock SQL, not relevant to the app
+- task/                 - Copy of `ratestask` 
+- app.py                - Main application
+- config.py             - Config file
+- constants.py          - Contains constants, such as raw SQL strings
+- helpers.py            - Contains helper functions
+- test_app.py           - Tests for main application
+- Dockerfile            - Docker file for running the application
+- docker-compose.yml    - Docker compose YAML file for running both the database and application 
 ```

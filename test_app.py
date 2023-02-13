@@ -86,7 +86,7 @@ def test_get_rates_invalid_port():
 
     response = app.test_client().get(f'/rates?{urlencode(url_params)}')
 
-    assert response.status_code == 400
+    assert response.status_code == 404
     json_body = json.loads(response.data.decode('utf-8'))
     assert json_body['message'] == 'Origin is not a valid port code or region slug.'
 
@@ -96,7 +96,7 @@ def test_get_rates_invalid_region():
 
     response = app.test_client().get(f'/rates?{urlencode(url_params)}')
 
-    assert response.status_code == 400
+    assert response.status_code == 404
     json_body = json.loads(response.data.decode('utf-8'))
     assert json_body['message'] == 'Destination is not a valid port code or region slug.'
 

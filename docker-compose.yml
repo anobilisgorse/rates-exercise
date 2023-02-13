@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  api:
+    container_name: rates_api
+    image: rates_flask_app
+    build: .
+    environment:
+      ENV: docker
+      DB_HOST: db
+      DB_PASSWORD: ratestask
+    depends_on:
+      - db
+    networks:
+      - default
+    ports:
+      - "5000:5000"
+    restart: always
+
+  db:
+    container_name: postgres_db
+    environment:
+      POSTGRES_HOST: localhost
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ratestask
+    image: postgres:latest
+    networks:
+      - default
+    ports:
+      - "5432:5432"
+    restart: always
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./sql/rates.sql:/docker-entrypoint-initdb.d/rates.sql
+
+volumes:
+  data: {}
