@@ -31,7 +31,7 @@ Do this only if you want to do a manual setup over the instant setup + initializ
 
 ## Setup your local run
 
-As this uses the [rates-task](https://github.com/xeneta/ratestask) resources (initialized dataset), we can use its [corresponding Dockerfile](https://github.com/xeneta/ratestask/blob/trunk/Dockerfile) also found in `task/` folder:
+As this uses the [rates-task](https://github.com/xeneta/ratestask) resources (initialized dataset), we can use its [corresponding Dockerfile](https://github.com/xeneta/ratestask/blob/trunk/Dockerfile) also found in `task/` folder for our database:
 
 ```bash
 > cd rates-exercise/task/
@@ -40,9 +40,10 @@ As this uses the [rates-task](https://github.com/xeneta/ratestask) resources (in
 > docker exec -e PGPASSWORD=ratestask -it ratestask psql -U postgres    # this runs the Postgres instance for database connection
 ```
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dependencies:
+Then, use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dependencies:
 
 ```bash
+> cd ..                                     # returns us to root folder of rates-exercise
 > pip install -r requirements.txt
 ```
 
@@ -78,8 +79,8 @@ If you use VS Code and have the [Coverage Gutters](https://marketplace.visualstu
 
 # Structure
 ```
-- sql/                  - Contains test or mock SQL, not relevant to the app
-- task/                 - Copy of `ratestask` 
+- sql/                  - Contains SQL files
+- task/                 - Copy of `ratestask` repository
 - app.py                - Main application
 - config.py             - Config file
 - constants.py          - Contains constants, such as raw SQL strings
