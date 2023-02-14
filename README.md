@@ -12,7 +12,7 @@ You can opt to do this manually too if you follow the steps in Manual Setup.
 For a one time setup and run, you may run the following command:
 
 ```bash
-docker compose up --build api
+> docker compose up --build api
 ```
 
 The app is running on http://localhost:5000
@@ -22,7 +22,7 @@ The app is running on http://localhost:5000
 When re-running the `docker compose up` command, you might encounter a `Permission denied` error involving the created volume `data`. To mitigate, you may run the following first:
 
 ```bash
- sudo chmod 777 data
+> sudo chmod 777 data
 ```
 
 # Manual Setup
@@ -79,13 +79,16 @@ If you use VS Code and have the [Coverage Gutters](https://marketplace.visualstu
 
 # Structure
 ```
-- sql/                  - Contains SQL files
-- task/                 - Copy of `ratestask` repository
-- app.py                - Main application
-- config.py             - Config file
-- constants.py          - Contains constants, such as raw SQL strings
-- helpers.py            - Contains helper functions
-- test_app.py           - Tests for main application
-- Dockerfile            - Docker file for running the application
-- docker-compose.yml    - Docker compose YAML file for running both the database and application 
+.
+├── sql/                - Contains SQL files
+├── task/               - Copy of ratestask repository
+├── app.py              - Main application
+├── config.py           - Config file
+├── constants.py        - Contains constants, such as raw SQL strings
+├── helpers.py          - Contains helper functions
+├── test_app.py         - Tests for main application
+├── requirements.txt    - Dependencies of the application
+├── Dockerfile          - Docker file for running the application
+├── docker-compose.yml  - Docker compose YAML file for running both the database and application 
+└── README.md
 ```
